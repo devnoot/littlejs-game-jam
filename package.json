@@ -1,0 +1,18 @@
+{
+  "name": "littlejs-game-jam",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "keywords": ["littlejs", "game", "jam"],
+  "author": "Anthony W. Weed <devnoot@gmail.com>",
+  "description": "",
+  "devDependencies": {
+    "littlejsengine": "^1.10.2",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11"
+  }
+}
