@@ -15,10 +15,10 @@ export class Player extends EngineObject {
 
   constructor() {
     super();
-    this.velocity = vec2(0,0) 
-    this.acceleration = vec2(0, 0) 
-    this.accelerationRate = 0.9 
-    this.decelerationRate = 0.20 
+    this.velocity = vec2(0,0)
+    this.acceleration = vec2(0, 0)
+    this.accelerationRate = 0.9
+    this.decelerationRate = 0.20
     this.maxVelocity = 32
     this.radius = 8
     this.size = vec2(16, 16)
@@ -44,13 +44,13 @@ export class Player extends EngineObject {
   }
 
   handleInput() {
-    let moveAccel = vec2(0, 0) 
-    
+    let moveAccel = vec2(0, 0)
+
     // if nothing is pressed apply deceleration so that player will eventually stop
     if (!keyIsDown('KeyW') && !keyIsDown('KeyS') && !keyIsDown('KeyA') && !keyIsDown('KeyD')) {
       this.applyDeceleration()
     }
-    
+
     if (keyIsDown('KeyW')) moveAccel = this.isRunning ? moveAccel.add(vec2(0, this.accelerationRate * RUNNING_ACCELERATION_MODIFIER)) : moveAccel.add(vec2(0, this.accelerationRate))
     if (keyIsDown('KeyA')) moveAccel = this.isRunning ? moveAccel.add(vec2(-this.accelerationRate * RUNNING_ACCELERATION_MODIFIER, 0)) : moveAccel.add(vec2(-this.accelerationRate, 0))
     if (keyIsDown('KeyS')) moveAccel = this.isRunning ? moveAccel.add(vec2(0, -this.accelerationRate * RUNNING_ACCELERATION_MODIFIER)) : moveAccel.add(vec2(0, -this.accelerationRate))

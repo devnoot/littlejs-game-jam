@@ -5,7 +5,7 @@ import { Utils } from "./core/Utils";
 import { Renderer } from "./core/Renderer";
 
 // constants go here so I remember to move them to their own file!
-const CELL_SIZE = MAP00.cellSize 
+const CELL_SIZE = MAP00.cellSize
 const CELL_LINE_THICKNESS = 1
 const COLOR_WHITE = new Color(255, 255, 255)
 
@@ -27,7 +27,7 @@ function init() {
     3 * CELL_SIZE
   )
   setCameraPos(start)
-  setCameraScale(4)
+  setCameraScale(2)
   GameObjects.Player.pos = vec2(start)
 }
 
@@ -66,15 +66,18 @@ function render() {
       Math.cos(GameObjects.Player.angle),
       Math.sin(GameObjects.Player.angle)
     ).scale(32)
-    const endPos = GameObjects.Player.pos.add(directionVector) 
-    const lineColor = GameObjects.Player.velocity.length() > 0 ? new Color(0, 0, 255) : new Color(255, 255, 255) 
+    const endPos = GameObjects.Player.pos.add(directionVector)
+    const lineColor = GameObjects.Player.velocity.length() > 0 ? new Color(0, 0, 255) : new Color(255, 255, 255)
     Renderer.drawLine(GameObjects.Player.pos, endPos, CELL_LINE_THICKNESS, lineColor)
+
+    Renderer.drawWalls(GameObjects.Player, data, CELL_SIZE)
+
   }
 
   if (currentGameMode === 'firstperson') {
     Renderer.drawWalls(GameObjects.Player, data, CELL_SIZE)
   }
-  
+
   // do debug stuff last
   displayPlayerDebug()
   displayCameraBounds()
@@ -106,7 +109,7 @@ function getMapLines(map: number[][]) {
 
 // debug text stuff that will probably be deleted later
 function displayPlayerDebug() {
-  const text = `🪿X:${GameObjects.Player.pos.x.toFixed(2)} Y:${GameObjects.Player.pos.y.toFixed(2)} DIR:${GameObjects.Player.direction} V: ${GameObjects.Player.velocity} RUN: ${GameObjects.Player.isRunning}`
+  const text = `🪿X:${GameObjects.Player.pos.x.toFixed(2)} Y:${GameObjects.Player.pos.y.toFixed(2)} A:${GameObjects.Player.angle.toFixed(2)} V: ${GameObjects.Player.velocity} RUN: ${GameObjects.Player.isRunning}`
   const position = vec2(GameObjects.Player.pos.x, GameObjects.Player.pos.y + 16)
   debugText(text, position, 4, '#00ff00', 0, 0, 'monospace')
 }
@@ -114,7 +117,7 @@ function displayPlayerDebug() {
 function displayCameraBounds() {
   const bounds = Utils.getScreenBoundary()
   const text = `🎥 Bounds: T:${bounds.top.toFixed(2)} R:${bounds.right.toFixed(2)} B:${bounds.bottom.toFixed(2)} L:${bounds.left.toFixed(2)}`
-  const position = vec2(GameObjects.Player.pos.x, GameObjects.Player.pos.y + 32) 
+  const position = vec2(GameObjects.Player.pos.x, GameObjects.Player.pos.y + 32)
   debugText(text, position, 8, '#FFFFFF', 0, 0, 'monospace')
 }
 
