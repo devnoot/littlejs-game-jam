@@ -14,10 +14,10 @@ export class Player extends EngineObject {
     super();
     this.velocity = vec2(0,0) 
     this.acceleration = vec2(0, 0) 
-    this.acceleration_rate= 0.25
-    this.deceleration_rate = 0.6 
-    this.max_velocity = 3
-    this.radius = 1
+    this.acceleration_rate = 0.9 
+    this.deceleration_rate = 0.25 
+    this.max_velocity = 32
+    this.radius = 8
     this.last_position = vec2(0, 0)
     this.direction = 0 // in radians
   }
