@@ -32,9 +32,11 @@ function init() {
 }
 
 function update() {
+  // toggle between game modes when 'm' is pressed
   if (keyWasReleased('KeyM')) {
       currentGameMode = currentGameMode === 'map' ? 'firstperson' : 'map'
   }
+
   // check for collisions between player and maps
   for (const { start, end } of getMapLines(MAP00.data)) {
     if (Utils.checkLineCollision(GameObjects.Player.pos, GameObjects.Player.radius, start, end)) {
@@ -61,7 +63,7 @@ function render() {
     //   customDrawLine(start, end)
     // }
 
-    // draw the player direction line if they are moving
+    // draw the player direction
     const directionVector = vec2(
       Math.cos(GameObjects.Player.angle),
       Math.sin(GameObjects.Player.angle)
@@ -70,7 +72,7 @@ function render() {
     const lineColor = GameObjects.Player.velocity.length() > 0 ? new Color(0, 0, 255) : new Color(255, 255, 255)
     Renderer.drawLine(GameObjects.Player.pos, endPos, CELL_LINE_THICKNESS, lineColor)
 
-    Renderer.drawWalls(GameObjects.Player, data, CELL_SIZE)
+    // Renderer.drawWalls(GameObjects.Player, data, CELL_SIZE)
 
   }
 
@@ -111,7 +113,7 @@ function getMapLines(map: number[][]) {
 function displayPlayerDebug() {
   const text = `🪿X:${GameObjects.Player.pos.x.toFixed(2)} Y:${GameObjects.Player.pos.y.toFixed(2)} A:${GameObjects.Player.angle.toFixed(2)} V: ${GameObjects.Player.velocity} RUN: ${GameObjects.Player.isRunning}`
   const position = vec2(GameObjects.Player.pos.x, GameObjects.Player.pos.y + 16)
-  debugText(text, position, 4, '#00ff00', 0, 0, 'monospace')
+  debugText(text, position, 8, '#00ff00', 0, 0, 'monospace')
 }
 
 function displayCameraBounds() {

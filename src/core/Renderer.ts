@@ -1,4 +1,4 @@
-import { Color, drawLine, mainCanvas, vec2, type Vector2 } from "littlejsengine"
+import { Color, drawLine, drawRect, mainCanvas, vec2, type Vector2 } from "littlejsengine"
 import { Linedef } from "../types"
 import { Player } from "./Player"
 import { Utils } from "./Utils"
@@ -15,117 +15,37 @@ export class Renderer {
     drawLine(start, end, thickness, color)
   }
 
-  static drawWalls(player: Player, data: number[][], cellSize: number) {
+  static drawWalls(player: Player, data: number[][]) {
+    let cellSize = 64
+    const { raysCasted, raysHit } = player.castRays(data)
 
-    // depth of field
-    let dof = 8
-    // first we set the ray angle to the player angle
-    // all angles are in radians
-    let rayAngle = player.angle
-    let ry, rx, yo, xo
+    // for (const { rayStart, rayEnd } of raysCasted) {
+    //   Renderer.drawLine(rayStart, rayEnd, 3, new Color(0, 255, 0))
+    // }
 
-    for (let ray=0; ray < 1; ray++){
-
-      // check the horizontal grid lines
-      // get the negative inverse of the ray angle
-      const aTan = -1 / Math.tan(rayAngle)
-      // is ray looking up or down
-      let facing = rayAngle > Math.PI ? 'DOWN' : 'UP'
-      if (facing === 'UP') {
-        ry = (player.pos.y >> 6 << 6) - 0.0001
-        rx = (player.pos.y - ry) * aTan + player.pos.x
-        yo = -cellSize
-        xo = -yo * aTan
-      } else if (facing === 'DOWN') {
-        ry = (player.pos.y >> 6 << 6) + cellSize
-        rx = (player.pos.y - ry) * aTan + player.pos.x
-        yo = cellSize
-        xo = -yo * aTan
-      } else if (ra === 0 || ra === Math.PI) {
-        // looking straight left or right
-        rx = player.pos.x
-        ry = player.pos.y
-        dof = 8
-      }
-      while(dof<8){
-        const mx = (rx >> 6)
-        const my = (ry >> 6)
-        if(data[my][mx] === 1){
-          dof = 8
-        } else {
-          rx += xo
-          ry += yo
-          dof += 1
-        }
-      }
-
-      // check the vertical grid lines
-      const nTan = -Math.tan(rayAngle)
-      if (rayAngle > Math.PI / 2 && rayAngle < Math.PI * 3 / 2) {
-        // looking left
-        rx = (player.pos.x >> 6 << 6) - 0.0001
-        ry = (player.pos.x - rx) * aTan + player.pos.y
-        xo = -cellSize
-        yo = -xo * aTan
-      }
-      if (rayAngle < Math.PI / 2 || rayAngle > Math.PI * 3 / 2) {
-        // looking right
-        rx = (player.pos.y >> 6 << 6) + cellSize
-        ry = (player.pos.y - ry) * aTan + player.pos.x
-        xo = cellSize
-        yo = -yo * aTan
-      }
-      if (rayAngle === 0 || rayAngle === Math.PI) {
-        rx = player.pos.x
-        ry = player.pos.y
-        dof = 8
-      }
-      while(dof<8){
-        const mx = (rx >> 6)
-        const my = (ry >> 6)
-        if(data[my][mx] === 1){
-          dof = 8
-        } else {
-          rx += xo
-          ry += yo
-          dof += 1
-        }
-      }
-      // draw the ray
-      drawLine(player.pos, vec2(rx, ry), 1, new Color(255, 0, 0))
+    // for (const { rayStart, rayEnd,rayDistance } of raysHit) {
+    //   drawLine(rayStart, rayStart.add(rayEnd.subtract(rayStart).scale(rayDistance / 1000)), 3, new Color(255, 0, 0))
+    // }
 
 
+    // render the wall projections in black and white for now
+    for (const { rayStart, rayEnd, rayDistance } of raysHit) {
+      const wallHeight = 64
+      const wallWidth = 64
+      const shade = Math.max(0, 255 - (rayDistance / 2))
+      const wallColor = new Color(shade, shade, shade)
+      const wallDistance = rayDistance * Math.cos(rayEnd.angle() - player.angle)
+      const wallHeightProjected = wallHeight / wallDistance * 1000
+      const wallTop = mainCanvas.height / 2 - wallHeightProjected / 2
+      const wallBottom = mainCanvas.height / 2 + wallHeightProjected / 2
+      const wallLeft = rayEnd.angle() - player.angle
+      const wallRight = wallLeft + wallWidth
+
+      // draw the wall
+      const wallRect = vec2(wallRight - wallLeft, wallBottom - wallTop)
+      drawRect(vec2(wallLeft, wallTop), wallRect, wallColor)
     }
 
-
-
-
-
-
-//    const fov = 90
-//    const numRays = fov
-//    const rayStep = fov / numRays
-//
-//    for (let ray = 0; ray < numRays; ray++) {
-//
-//      const angle = player.direction - fov / 2 + ray
-//      const direction = vec2(Math.cos(angle), Math.sin(angle))
-//      const result = Utils.castRay(player.pos, direction, data, cellSize)
-//
-//      if (result.hit && result.hitPosition) {
-//        const wallHeight = mainCanvas.height / result.distance
-//        const wallColor = new Color(255 / result.distance, 255 / result.distance, 255 / result.distance)
-//        // draw the rays that hit
-//        drawLine(player.pos, player.pos.add(direction.scale(32)), 1, new Color(255, 0, 0))
-//        // drawLine(
-//        //   vec2(ray, mainCanvas.height / 2 - wallHeight / 2),
-//        //   vec2(ray, mainCanvas.height / 2 + wallHeight / 2),
-//        //   1,
-//        //   wallColor
-//        // )
-//      }
-//    }
-//  }
   }
 
 }
