@@ -1,4 +1,4 @@
-import { Color, drawLine, drawRect, mainCanvas, vec2, type Vector2 } from "littlejsengine"
+import { Color, drawLine, drawRect, mainCanvas, vec2, worldToScreen, type Vector2 } from "littlejsengine"
 import { Linedef } from "../types"
 import { Player } from "./Player"
 import { Utils } from "./Utils"
@@ -30,12 +30,12 @@ export class Renderer {
 
     // render the wall projections in black and white for now
     for (const { rayStart, rayEnd, rayDistance } of raysHit) {
-      const wallHeight = 64
-      const wallWidth = 64
+      const wallHeight = 32 
+      const wallWidth = 32 
       const shade = Math.max(0, 255 - (rayDistance / 2))
       const wallColor = new Color(shade, shade, shade)
       const wallDistance = rayDistance * Math.cos(rayEnd.angle() - player.angle)
-      const wallHeightProjected = wallHeight / wallDistance * 1000
+      const wallHeightProjected = wallHeight / wallDistance * 256
       const wallTop = mainCanvas.height / 2 - wallHeightProjected / 2
       const wallBottom = mainCanvas.height / 2 + wallHeightProjected / 2
       const wallLeft = rayEnd.angle() - player.angle
@@ -43,7 +43,10 @@ export class Renderer {
 
       // draw the wall
       const wallRect = vec2(wallRight - wallLeft, wallBottom - wallTop)
-      drawRect(vec2(wallLeft, wallTop), wallRect, wallColor)
+      drawRect(
+        worldToScreen(vec2(wallLeft, wallTop)),
+        worldToScreen(wallRect),
+        wallColor)
     }
 
   }

@@ -45,10 +45,42 @@ export class Player extends EngineObject {
     }
   }
 
+  moveForward() {
+    let moveAccel = vec2(Math.cos(this.angle) * this.accelerationRate, Math.sin(this.angle) * this.accelerationRate)
+    if (this.isRunning) {
+      moveAccel = moveAccel.scale(RUNNING_ACCELERATION_MODIFIER)
+    }
+    this.applyAcceleration(moveAccel)
+  }
+
+  moveBackward() {
+    let moveAccel = vec2(Math.cos(this.angle) * -this.accelerationRate, Math.sin(this.angle) * -this.accelerationRate)
+    if (this.isRunning) {
+      moveAccel = moveAccel.scale(RUNNING_ACCELERATION_MODIFIER)
+    }
+    this.applyAcceleration(moveAccel)
+  }
+
+  strafeRight() {
+    let moveAccel = vec2(Math.cos(this.angle - Math.PI / 2) * this.accelerationRate, Math.sin(this.angle - Math.PI / 2) * this.accelerationRate)
+    if (this.isRunning) {
+      moveAccel = moveAccel.scale(RUNNING_ACCELERATION_MODIFIER)
+    }
+    this.applyAcceleration(moveAccel)
+  }
+
+  strafeLeft() {
+    let moveAccel = vec2(Math.cos(this.angle + Math.PI / 2) * this.accelerationRate, Math.sin(this.angle + Math.PI / 2) * this.accelerationRate)
+    if (this.isRunning) {
+      moveAccel = moveAccel.scale(RUNNING_ACCELERATION_MODIFIER)
+    }
+    this.applyAcceleration(moveAccel)
+  }
+
   castRays(map: number[][]) {
-    let rayStep = (60 / 8) * (Math.PI / 180)
-    let fov = 60
-    let maxRayLength = 1024
+    let rayStep = (1) * (Math.PI / 180)
+    let fov = 90
+    let maxRayLength = 256 
     let angleStart = this.angle - (fov / 2) * (Math.PI / 180)
     let angleEnd = this.angle + (fov / 2) * (Math.PI / 180)
 
@@ -58,7 +90,7 @@ export class Player extends EngineObject {
       let rayStart = this.pos
       let rayEnd = this.pos.add(direction.scale(maxRayLength))
       raysCasted.push({ rayStart, rayEnd })
-      // Renderer.drawLine(rayStart, rayEnd, 3, new Color(0, 255, 0))
+      Renderer.drawLine(rayStart, rayEnd, 1, new Color(255, 255, 0))
     }
 
     // for each ray, check if it collides with the map. If the map cell is nonzero, it is solid.
@@ -99,10 +131,10 @@ export class Player extends EngineObject {
     //   this.castRays()
     // }
 
-    if (keyIsDown('KeyW')) moveAccel = this.isRunning ? moveAccel.add(vec2(0, this.accelerationRate * RUNNING_ACCELERATION_MODIFIER)) : moveAccel.add(vec2(0, this.accelerationRate))
-    if (keyIsDown('KeyA')) moveAccel = this.isRunning ? moveAccel.add(vec2(-this.accelerationRate * RUNNING_ACCELERATION_MODIFIER, 0)) : moveAccel.add(vec2(-this.accelerationRate, 0))
-    if (keyIsDown('KeyS')) moveAccel = this.isRunning ? moveAccel.add(vec2(0, -this.accelerationRate * RUNNING_ACCELERATION_MODIFIER)) : moveAccel.add(vec2(0, -this.accelerationRate))
-    if (keyIsDown('KeyD')) moveAccel = this.isRunning ? moveAccel.add(vec2(this.accelerationRate * RUNNING_ACCELERATION_MODIFIER, 0)) : moveAccel.add(vec2(this.accelerationRate, 0))
+    keyIsDown('KeyW') && this.moveForward() 
+    keyIsDown('KeyA') && this.strafeLeft()
+    keyIsDown('KeyS') && this.moveBackward()
+    keyIsDown('KeyD') && this.strafeRight()
 
     if (keyIsDown('ShiftLeft')) {
       this.isRunning = true
@@ -132,12 +164,14 @@ export class Player extends EngineObject {
 
   render() {
     // super.render()
-    drawCanvas2D(this.pos, vec2(this.radius / 8, this.radius / 8), 0, false, (context: CanvasRenderingContext2D) => {
-      context.fillStyle = 'grey';
-      context.beginPath();
-      context.arc(0, 0, this.radius, 0, Math.PI * 2);
-      context.fill();
-    });
+    // drawCanvas2D(this.pos, vec2(this.radius / 8, this.radius / 8), 0, false, (context: CanvasRenderingContext2D) => {
+    //   context.fillStyle = 'grey';
+    //   context.beginPath();
+    //   context.arc(0, 0, this.radius, 0, Math.PI * 2);
+    //   context.fill();
+    // });
+
+    drawRect(this.pos, this.size, new Color(255, 0, 0))
   }
 
 }
