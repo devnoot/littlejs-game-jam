@@ -1,6 +1,8 @@
 import { type Vector2, EngineObject, keyWasPressed, keyWasReleased, keyIsDown, vec2, mousePos, drawCanvas2D, Color, drawRect } from "littlejsengine"
 import { Renderer } from "./Renderer"
 import { MAP00 } from "../assets/maps/map00"
+import { Utils } from "./Utils"
+import { GameConfig } from "../GameConfig"
 
 const RUNNING_ACCELERATION_MODIFIER = 3.5
 
@@ -14,8 +16,10 @@ export class Player extends EngineObject {
   lastPosition: Vector2
   direction: number
   isRunning: boolean
+  fov: number
+  gameConfig: GameConfig
 
-  constructor() {
+  constructor({ gameConfig }: { gameConfig: GameConfig}) {
     super();
     this.velocity = vec2(0,0)
     this.acceleration = vec2(0, 0)
@@ -27,6 +31,8 @@ export class Player extends EngineObject {
     this.lastPosition = vec2(0, 0)
     this.direction = 0 // in radians
     this.isRunning = false
+    this.fov = 60
+    this.gameConfig = gameConfig
   }
 
   applyAcceleration(acceleration: Vector2) {
@@ -78,46 +84,37 @@ export class Player extends EngineObject {
   }
 
   castRays(map: number[][]) {
-    let rayStep = (1) * (Math.PI / 180)
-    let fov = 90
-    let maxRayLength = 256 
-    let angleStart = this.angle - (fov / 2) * (Math.PI / 180)
-    let angleEnd = this.angle + (fov / 2) * (Math.PI / 180)
+  const rayStep = (1) * (Math.PI / 180); // 1 degree in radians
+  const fov = this.fov * (Math.PI / 180);
+  const maxRayLength = 512; // Max ray length
+  const angleStart = this.angle - fov / 2;
+  const angleEnd = this.angle + fov / 2;
 
-    let raysCasted = []
-    for (let rayAngle = angleStart; rayAngle < angleEnd; rayAngle += rayStep) {
-      let direction = vec2(Math.cos(rayAngle), Math.sin(rayAngle))
-      let rayStart = this.pos
-      let rayEnd = this.pos.add(direction.scale(maxRayLength))
-      raysCasted.push({ rayStart, rayEnd })
-      Renderer.drawLine(rayStart, rayEnd, 1, new Color(255, 255, 0))
+  const raysCasted = [];
+  const raysHit = [];
+
+  for (let rayAngle = angleStart; rayAngle < angleEnd; rayAngle += rayStep) {
+    const direction = vec2(Math.cos(rayAngle), Math.sin(rayAngle));
+    const rayStart = this.pos;
+    const rayResult = Utils.castRay(rayStart, direction, map, 64);
+
+    const rayEnd = rayResult.hit
+      ? rayResult.hitPosition
+      : rayStart.add(direction.scale(maxRayLength));
+
+    raysCasted.push({ rayStart, rayEnd });
+
+    if (rayResult.hit) {
+      raysHit.push({
+        rayStart,
+        rayEnd,
+        rayDistance: rayResult.distance,
+      });
     }
-
-    // for each ray, check if it collides with the map. If the map cell is nonzero, it is solid.
-    // the cell size is 64.
-    let raysHit = []
-    for (const { rayStart, rayEnd } of raysCasted) {
-      let rayHit = false
-      let rayDistance = maxRayLength
-      for (let i = 0; i < maxRayLength; i += 1) {
-        let currentPos = rayStart.add(rayEnd.subtract(rayStart).scale(i / maxRayLength))
-        let mapX = Math.floor(currentPos.x / 64)
-        let mapY = Math.floor(currentPos.y / 64)
-        if (map[mapY] && map[mapY][mapX] === 1) {
-          rayHit = true
-          rayDistance = currentPos.distance(rayStart)
-          break
-        }
-      }
-      if (rayHit) {
-        raysHit.push({ rayStart, rayEnd, rayDistance })
-        Renderer.drawLine(rayStart, rayStart.add(rayEnd.subtract(rayStart).scale(rayDistance / maxRayLength)), 3, new Color(255, 0, 0))
-      }
-    }
-
-    return { raysCasted, raysHit}
-
   }
+
+  return { raysCasted, raysHit };
+}
 
   handleInput() {
     let moveAccel = vec2(0, 0)
@@ -143,10 +140,15 @@ export class Player extends EngineObject {
       this.isRunning = false
       this.maxVelocity = 32
     }
-
-    // set the angle to player position to the mouse position
-    this.angle = Math.atan2(mousePos.y - this.pos.y, mousePos.x - this.pos.x);
-
+    // Flip the y-axis for correct mouse-based angle calculation
+    // Check the current game mode
+    if (this.gameConfig.getViewMode() === 'first-person') {
+      // Flip the y-axis for first-person mode
+      this.angle = Math.atan2(-(mousePos.y - this.pos.y), mousePos.x - this.pos.x);
+    } else {
+      // Use normal angle calculation for map mode
+      this.angle = Math.atan2(mousePos.y - this.pos.y, mousePos.x - this.pos.x);
+    }
     this.applyAcceleration(moveAccel)
   }
 

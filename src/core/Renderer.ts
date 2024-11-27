@@ -1,54 +1,59 @@
-import { Color, drawLine, drawRect, mainCanvas, vec2, worldToScreen, type Vector2 } from "littlejsengine"
-import { Linedef } from "../types"
-import { Player } from "./Player"
-import { Utils } from "./Utils"
+import { Color, drawLine, drawRect, mainCanvas, vec2, worldToScreen, type Vector2 } from "littlejsengine";
+import { Linedef } from "../types";
+import { Player } from "./Player";
+import { Utils } from "./Utils";
+
+const rayLogs = []
 
 export class Renderer {
-
   static drawLinedefs(linedefs: Linedef[], thickness: number = 1, color: Color = new Color(255, 255, 255)) {
-    for(const { start, end } of linedefs) {
-      drawLine(start, end, thickness, color)
+    for (const { start, end } of linedefs) {
+      drawLine(start, end, thickness, color);
     }
   }
 
   static drawLine(start: Vector2, end: Vector2, thickness: number = 1, color: Color = new Color(255, 255, 255)) {
-    drawLine(start, end, thickness, color)
+    drawLine(start, end, thickness, color);
   }
 
   static drawWalls(player: Player, data: number[][]) {
-    let cellSize = 64
-    const { raysCasted, raysHit } = player.castRays(data)
+    const cellSize = 64;
+    const wallHeight = 64;
+    const fov = player.fov * (Math.PI / 180);
+    const halfCanvasHeight = mainCanvas.height / 2;
 
-    // for (const { rayStart, rayEnd } of raysCasted) {
-    //   Renderer.drawLine(rayStart, rayEnd, 3, new Color(0, 255, 0))
-    // }
+    const { raysCasted, raysHit } = player.castRays(data);
 
-    // for (const { rayStart, rayEnd,rayDistance } of raysHit) {
-    //   drawLine(rayStart, rayStart.add(rayEnd.subtract(rayStart).scale(rayDistance / 1000)), 3, new Color(255, 0, 0))
-    // }
+    raysHit.forEach(({ rayStart, rayEnd, rayDistance }, rayIndex) => {
+      const rayDirection = rayEnd!.subtract(rayStart);
+      const rayAngle = rayDirection.angle();
+      let angleDelta = ((rayAngle - player.angle + Math.PI * 2) % (Math.PI * 2));
+      if (angleDelta > Math.PI) angleDelta -= Math.PI * 2;
 
+      if (Math.abs(angleDelta) > fov / 2) return;
 
-    // render the wall projections in black and white for now
-    for (const { rayStart, rayEnd, rayDistance } of raysHit) {
-      const wallHeight = 32 
-      const wallWidth = 32 
-      const shade = Math.max(0, 255 - (rayDistance / 2))
-      const wallColor = new Color(shade, shade, shade)
-      const wallDistance = rayDistance * Math.cos(rayEnd.angle() - player.angle)
-      const wallHeightProjected = wallHeight / wallDistance * 256
-      const wallTop = mainCanvas.height / 2 - wallHeightProjected / 2
-      const wallBottom = mainCanvas.height / 2 + wallHeightProjected / 2
-      const wallLeft = rayEnd.angle() - player.angle
-      const wallRight = wallLeft + wallWidth
+      const perpendicularDistance = rayDistance * Math.cos(angleDelta);
+      const clampedDistance = Math.max(1, perpendicularDistance);
+      const projectedWallHeight = (wallHeight / clampedDistance) * halfCanvasHeight;
 
-      // draw the wall
-      const wallRect = vec2(wallRight - wallLeft, wallBottom - wallTop)
-      drawRect(
-        worldToScreen(vec2(wallLeft, wallTop)),
-        worldToScreen(wallRect),
-        wallColor)
-    }
+      const normalizedDelta = (angleDelta + fov / 2) / fov;
+      const screenX = normalizedDelta * mainCanvas.width;
+      const wallSliceWidth = mainCanvas.width / raysCasted.length;
 
+      const wallTop = halfCanvasHeight - projectedWallHeight / 2;
+      const wallBottom = halfCanvasHeight + projectedWallHeight / 2;
+
+      const shadeFactor = Math.min(rayDistance / (8 * cellSize), 1);
+      const wallColor = new Color(255 * (1 - shadeFactor), 255 * (1 - shadeFactor), 255 * (1 - shadeFactor));
+
+      if (screenX >= 0 && screenX <= mainCanvas.width) {
+        drawRect(
+          vec2(screenX - wallSliceWidth / 2, mainCanvas.height - wallBottom),
+          vec2(wallSliceWidth, projectedWallHeight),
+          wallColor
+        );
+      }
+    });
   }
 
 }

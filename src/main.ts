@@ -3,20 +3,24 @@ import { Player } from "./core/Player";
 import { MAP00 } from "./assets/maps/map00";
 import { Utils } from "./core/Utils";
 import { Renderer } from "./core/Renderer";
+import { GameConfig } from "./GameConfig";
 
 class Game {
+  config: GameConfig;
+
   private static readonly CELL_SIZE = MAP00.cellSize;
   private static readonly CELL_LINE_THICKNESS = 1;
   private static readonly COLOR_WHITE = new Color(255, 255, 255);
 
   private image_sources: any[] = [];
   private $root = document.body;
-  private currentGameMode: 'map' | 'firstperson' = 'map';
-  private GameObjects = {
-    Player: new Player()
-  };
+  private GameObjects: { Player: Player };
 
   constructor() {
+    this.config = new GameConfig();
+    this.GameObjects = {
+      Player: new Player({gameConfig: this.config})
+    };
     engineInit(this.init.bind(this), this.update.bind(this), this.post_update.bind(this), this.render.bind(this), this.post_render.bind(this), this.image_sources, this.$root);
   }
 
@@ -29,7 +33,9 @@ class Game {
 
   private update() {
     if (keyWasReleased('KeyM')) {
-      this.currentGameMode = this.currentGameMode === 'map' ? 'firstperson' : 'map';
+      this.config.setViewMode(
+        this.config.getViewMode()  === 'top-down' ? 'first-person' : 'top-down'
+      )
     }
 
     for (const { start, end } of this.getMapLines(MAP00.data)) {
@@ -47,7 +53,7 @@ class Game {
     const { data } = MAP00;
     const linedefs = this.getMapLines(data);
 
-    if (this.currentGameMode === 'map') {
+    if (this.config.getViewMode() === 'top-down') {
       Renderer.drawLinedefs(linedefs);
 
       const directionVector = vec2(
@@ -59,7 +65,7 @@ class Game {
       Renderer.drawLine(this.GameObjects.Player.pos, endPos, Game.CELL_LINE_THICKNESS, lineColor);
     }
 
-    if (this.currentGameMode === 'firstperson') {
+    if (this.config.getViewMode() === 'first-person') {
       Renderer.drawWalls(this.GameObjects.Player, data);
     }
 
